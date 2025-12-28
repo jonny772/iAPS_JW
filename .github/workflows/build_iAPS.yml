@@ -148,11 +148,18 @@ jobs:
           git clone https://github.com/Artificial-Pancreas/fastlane.git fastlane-patched
           cd fastlane-patched
           git checkout dev
-          sed -i '' "s/< 3\.0\.0/< 5.0.0/" fastlane.gemspec
+          ruby - <<'RUBY'
+            require "pathname"
+            path = Pathname("fastlane.gemspec")
+            text = path.read
+            updated = text.gsub(/(bundler["']?,?\s*["']?>=\s*1\.12\.0["']?,?\s*["']?<)\s*3\.0\.0/i, "\\15.0.0")
+            path.write(updated)
+          RUBY
           cd ..
           bundle config set --local local.fastlane "${PWD}/fastlane-patched"
-          bundle install
-          bundle --version
+          bundle config set --local without test
+          bundle _4.0.1_ install
+          bundle _4.0.1_ --version
 
       # Sync the GitHub runner clock with the Windows time server (workaround as suggested in https://github.com/actions/runner/issues/2996)
       - name: Sync clock
