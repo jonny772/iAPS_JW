@@ -133,18 +133,19 @@ jobs:
       - name: Patch Match Tables
         run: find /usr/local/lib/ruby/gems -name table_printer.rb | xargs sed -i "" "/puts(Terminal::Table.new(params))/d"
 
-      - name: Set up Ruby with Bundler 2.7.2
+      - name: Set up Ruby with Bundler 2.4.22
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.1'
-          bundler: '2.7.2'
+          bundler: '2.4.22'
           bundler-cache: false
 
       # Install project dependencies
       - name: Install project dependencies
         run: |
-          gem install bundler:2.7.2
-          bundle _2.7.2_ install
+          gem uninstall -aIx bundler || true
+          gem install bundler:2.4.22
+          bundle _2.4.22_ install
 
       # Sync the GitHub runner clock with the Windows time server (workaround as suggested in https://github.com/actions/runner/issues/2996)
       - name: Sync clock
@@ -152,7 +153,7 @@ jobs:
 
       # Build signed iAPS IPA file
       - name: Fastlane Build & Archive
-        run: bundle _2.7.2_ exec fastlane build_iAPS
+        run: bundle _2.4.22_ exec fastlane build_iAPS
         env:
           TEAMID: ${{ secrets.TEAMID }}
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -163,7 +164,7 @@ jobs:
       
       # Upload to TestFlight
       - name: Fastlane upload to TestFlight
-        run: bundle _2.7.2_ exec fastlane release
+        run: bundle _2.4.22_ exec fastlane release
         env:
           TEAMID: ${{ secrets.TEAMID }}
           GH_PAT: ${{ secrets.GH_PAT }}
