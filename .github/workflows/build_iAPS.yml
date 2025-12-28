@@ -137,17 +137,15 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.1'
-          bundler: 'none'
+          bundler: '2.4.22'
           bundler-cache: false
 
       # Install a Bundler version compatible with fastlane
-      - name: Install Bundler 2.7.2
+      - name: Install Bundler 2.4.22
         run: |
-          gem uninstall -aIx bundler || true
-          gem install bundler:2.7.2 --force
-          bundle _2.7.2_ config set --local without test
-          bundle _2.7.2_ install
-          bundle _2.7.2_ --version
+          bundle _2.4.22_ config set --local without test
+          bundle _2.4.22_ install
+          bundle _2.4.22_ --version
 
       # Sync the GitHub runner clock with the Windows time server (workaround as suggested in https://github.com/actions/runner/issues/2996)
       - name: Sync clock
@@ -155,7 +153,7 @@ jobs:
 
       # Build signed iAPS IPA file
       - name: Fastlane Build & Archive
-        run: bundle _2.7.2_ exec fastlane build_iAPS
+        run: bundle _2.4.22_ exec fastlane build_iAPS
         env:
           TEAMID: ${{ secrets.TEAMID }}
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -166,7 +164,7 @@ jobs:
       
       # Upload to TestFlight
       - name: Fastlane upload to TestFlight
-        run: bundle _2.7.2_ exec fastlane release
+        run: bundle _2.4.22_ exec fastlane release
         env:
           TEAMID: ${{ secrets.TEAMID }}
           GH_PAT: ${{ secrets.GH_PAT }}
