@@ -140,26 +140,14 @@ jobs:
           bundler: 'none'
           bundler-cache: false
 
-      # Install Bundler 4 and configure fastlane to allow it
-      - name: Prepare Bundler and fastlane for Bundler 4
+      # Install a Bundler version compatible with fastlane
+      - name: Install Bundler 2.7.2
         run: |
           gem uninstall -aIx bundler || true
-          gem install bundler:4.0.1 --force
-          git clone https://github.com/Artificial-Pancreas/fastlane.git fastlane-patched
-          cd fastlane-patched
-          git checkout dev
-          ruby - <<'RUBY'
-            require "pathname"
-            path = Pathname("fastlane.gemspec")
-            text = path.read
-            updated = text.gsub(/(bundler["']?,?\s*["']?>=\s*1\.12\.0["']?,?\s*["']?<)\s*3\.0\.0/i, "\\15.0.0")
-            path.write(updated)
-          RUBY
-          cd ..
-          bundle config set --local local.fastlane "${PWD}/fastlane-patched"
-          bundle config set --local without test
-          bundle _4.0.1_ install
-          bundle _4.0.1_ --version
+          gem install bundler:2.7.2 --force
+          bundle _2.7.2_ config set --local without test
+          bundle _2.7.2_ install
+          bundle _2.7.2_ --version
 
       # Sync the GitHub runner clock with the Windows time server (workaround as suggested in https://github.com/actions/runner/issues/2996)
       - name: Sync clock
@@ -167,7 +155,7 @@ jobs:
 
       # Build signed iAPS IPA file
       - name: Fastlane Build & Archive
-        run: bundle exec fastlane build_iAPS
+        run: bundle _2.7.2_ exec fastlane build_iAPS
         env:
           TEAMID: ${{ secrets.TEAMID }}
           GH_PAT: ${{ secrets.GH_PAT }}
@@ -178,7 +166,7 @@ jobs:
       
       # Upload to TestFlight
       - name: Fastlane upload to TestFlight
-        run: bundle exec fastlane release
+        run: bundle _2.7.2_ exec fastlane release
         env:
           TEAMID: ${{ secrets.TEAMID }}
           GH_PAT: ${{ secrets.GH_PAT }}
