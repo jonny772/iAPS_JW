@@ -83,7 +83,10 @@ jobs:
 
       - name: Select Xcode version
         run: "sudo xcode-select --switch /Applications/Xcode_26.1.1.app/Contents/Developer"
-      
+
+      - name: Ensure iOS platform is installed
+        run: "sudo xcodebuild -downloadPlatform iOS || xcodebuild -downloadPlatform iOS"
+
       - name: Checkout Repo for syncing
         if: |
           vars.SCHEDULED_SYNC == 'true'
