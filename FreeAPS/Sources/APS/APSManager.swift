@@ -267,6 +267,17 @@ final class BaseAPSManager: APSManager, Injectable {
                 // Closed loop - enact suggested
                 return self.enactSuggested()
             }
+            // Safety net: if the pipeline (e.g. pump enactment over BLE) never completes —
+            // notably when iOS suspends the app mid-loop after backgrounding — fail the chain so
+            // the sink runs loopCompleted() and isLooping is reset. Without this the flag latches
+            // true, the status spinner sticks, and the re-entrancy guard blocks all future loops
+            // until the app is force-quit and relaunched.
+            .timeout(
+                .seconds(Config.loopTimeout),
+                scheduler: processQueue,
+                options: nil,
+                customError: { APSError.apsError(message: "Loop timed out") }
+            )
             .sink { [weak self] completion in
                 guard let self = self else { return }
                 loopStatRecord.end = Date()
