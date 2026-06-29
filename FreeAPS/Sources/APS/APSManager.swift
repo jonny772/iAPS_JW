@@ -211,18 +211,25 @@ final class BaseAPSManager: APSManager, Injectable {
 
     // If a loop has been "in progress" longer than it could plausibly take, it has stalled (e.g.
     // the app was suspended mid-loop). Reset isLooping so the status spinner clears and the
-    // re-entrancy guard stops blocking, then kick a fresh loop so looping resumes without the user
-    // having to force-quit and relaunch.
+    // re-entrancy guard stops blocking; looping then resumes on the next normal trigger without the
+    // user having to force-quit and relaunch.
+    //
+    // We deliberately do NOT call loop() directly here. The normal trigger
+    // (processReceivedBloodGlucose -> updatePumpData/ensureCurrentPumpData -> recommendsLoop)
+    // reconciles pump history before determineBasal recomputes IOB. Calling loop() straight from
+    // foreground would skip that reconciliation and could run determineBasal against a
+    // pumphistory.json that has not yet absorbed a dose delivered during suspension -- understating
+    // IOB and risking an additive SMB on top of insulin already delivered. Resetting the flag only
+    // keeps recovery free of any delivery decision.
     private func recoverStuckLoopIfNeeded() {
         guard appCoordinator.isLooping.value else { return }
         let elapsed = Date().timeIntervalSince(lastStartLoopDate)
         guard elapsed > Config.loopTimeout else { return }
         warning(
             .apsManager,
-            "Loop stuck in progress for \(Int(elapsed))s after returning to foreground. Resetting and retrying."
+            "Loop stuck in progress for \(Int(elapsed))s after returning to foreground. Resetting loop state."
         )
         appCoordinator.isLooping.send(false)
-        loop()
     }
 
     // Loop entry point
