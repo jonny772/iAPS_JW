@@ -196,6 +196,33 @@ final class BaseAPSManager: APSManager, Injectable {
                 }
             }
             .store(in: &lifetime)
+
+        // Foreground backstop for a stalled loop. The .timeout in loop() resets isLooping when the
+        // pipeline hangs, but if iOS fully suspends the app its timers/Combine schedulers do not
+        // fire, so a loop suspended mid-enactment can come back foregrounded with isLooping still
+        // stuck true. On becoming active, recover that case explicitly.
+        NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
+            .receive(on: processQueue)
+            .sink { [weak self] _ in
+                self?.recoverStuckLoopIfNeeded()
+            }
+            .store(in: &lifetime)
+    }
+
+    // If a loop has been "in progress" longer than it could plausibly take, it has stalled (e.g.
+    // the app was suspended mid-loop). Reset isLooping so the status spinner clears and the
+    // re-entrancy guard stops blocking, then kick a fresh loop so looping resumes without the user
+    // having to force-quit and relaunch.
+    private func recoverStuckLoopIfNeeded() {
+        guard appCoordinator.isLooping.value else { return }
+        let elapsed = Date().timeIntervalSince(lastStartLoopDate)
+        guard elapsed > Config.loopTimeout else { return }
+        warning(
+            .apsManager,
+            "Loop stuck in progress for \(Int(elapsed))s after returning to foreground. Resetting and retrying."
+        )
+        appCoordinator.isLooping.send(false)
+        loop()
     }
 
     // Loop entry point
