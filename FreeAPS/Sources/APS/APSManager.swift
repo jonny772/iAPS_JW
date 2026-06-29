@@ -201,9 +201,9 @@ final class BaseAPSManager: APSManager, Injectable {
         // pipeline hangs, but if iOS fully suspends the app its timers/Combine schedulers do not
         // fire, so a loop suspended mid-enactment can come back foregrounded with isLooping still
         // stuck true. On becoming active, recover that case explicitly.
-        NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
+        Foundation.NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)
             .receive(on: processQueue)
-            .sink { [weak self] _ in
+            .sink { [weak self] (_: Foundation.Notification) in
                 self?.recoverStuckLoopIfNeeded()
             }
             .store(in: &lifetime)
