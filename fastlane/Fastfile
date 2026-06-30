@@ -139,16 +139,22 @@ platform :ios do
 
   desc "Push to TestFlight"
   lane :release do
+    # Build in this same fastlane process so gym populates
+    # lane_context[SharedValues::IPA_OUTPUT_PATH]; upload_to_testflight then
+    # consumes that path natively. Running build and upload as two separate
+    # fastlane invocations left the IPA path unresolved, so altool received an
+    # empty --file ("Expected file path argument is missing, --file").
+    build_iAPS
+
     api_key = app_store_connect_api_key(
       key_id: "#{FASTLANE_KEY_ID}",
       issuer_id: "#{FASTLANE_ISSUER_ID}",
       key_content: "#{FASTLANE_KEY}"
     )
-    
+
     upload_to_testflight(
       api_key: api_key,
       skip_submission: false,
-      ipa: "iAPS.ipa",
       skip_waiting_for_build_processing: true,
       changelog: git_branch+" "+last_git_commit[:abbreviated_commit_hash],
     )
