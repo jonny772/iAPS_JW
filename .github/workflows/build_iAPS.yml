@@ -152,10 +152,19 @@ jobs:
       - name: Sync clock
         run: sudo sntp -sS time.windows.com
 
-      # Build signed iAPS IPA and upload to TestFlight in ONE fastlane process
-      # (the release lane calls build_iAPS) so gym's IPA_OUTPUT_PATH flows to
-      # upload_to_testflight; splitting them left altool with an empty --file.
-      - name: Fastlane Build, Archive & upload to TestFlight
+      # Build signed iAPS IPA file
+      - name: Fastlane Build & Archive
+        run: bundle _${{ env.BUNDLER_VER }}_ exec fastlane build_iAPS
+        env:
+          TEAMID: ${{ secrets.TEAMID }}
+          GH_PAT: ${{ secrets.GH_PAT }}
+          FASTLANE_KEY_ID: ${{ secrets.FASTLANE_KEY_ID }}
+          FASTLANE_ISSUER_ID: ${{ secrets.FASTLANE_ISSUER_ID }}
+          FASTLANE_KEY: ${{ secrets.FASTLANE_KEY }}
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+
+      # Upload to TestFlight
+      - name: Fastlane upload to TestFlight
         run: bundle _${{ env.BUNDLER_VER }}_ exec fastlane release
         env:
           TEAMID: ${{ secrets.TEAMID }}
